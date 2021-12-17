@@ -23,12 +23,13 @@ import pickle
 import sklearn
 import numpy as np
 import pandas as pd
+import xgboost as xgb
 from comet_ml import API
 from comet_ml import Experiment
 
 # Cutomized libs
 import ift6758
-from config_data import api, \                        
+from config_data import api, \
                         comet_config, \
                         filename_dict, \
                         features_dict
@@ -45,8 +46,11 @@ def before_first_request():
     """
     Hook to handle any initialization before the first request (e.g. load model,
     setup logging handler, etc.)
+
+    In our project, default model is Decision Tree (with RandomizedSearchCV)
+
     """
-    print("---------------------running before_first_request()---------------------")
+    app.logger.info("---------------------running before_first_request()---------------------")
     # Basic logging configuration
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
 
@@ -56,32 +60,40 @@ def before_first_request():
 
     # Any other initialization before the first request (e.g. load default model)
     global model_name
+    
     model_name = filename_dict["models"]\
                     [comet_config["model"]]\
                     [comet_config["version"]]
 
     model_file = Path(f"{model_name}")
 
+    # Check to see if the model you are querying for is already downloaded
+    # if yes, load that model and write to the log about the model change. 
+    if os.path.isfile(model_file):
+        app.logger.info(f"Loading model {model_file}.")
     
-    if not model_file.is_file():
-        print(f"{model_file} doesn't exist, downloading ...")
-        # https://www.comet.ml/docs/python-sdk/API/#apidownload_registry_model
-        api.download_registry_model(
-            comet_config["workspace"],
-            comet_config["model"],
-            comet_config["version"],
-            output_path="./",
-            expand=True,
-        )
-        # rename model file to the same name as in the api.get() call
-        # this will allow us to detect if a model has already been downloaded by looking at the file name
-        # rename_model_file(model_name)
-        print(f"model name:{model_name}")
+    else:
+        app.logger.info(f"{model_file} doesn't exist, downloading ...")
+        # if it succeeds, load that model and write to the log about the model change. 
+        try:
+            # https://www.comet.ml/docs/python-sdk/API/#apidownload_registry_model
+            api.download_registry_model(
+                comet_config["workspace"],
+                comet_config["model"],
+                comet_config["version"],
+                output_path="./",
+                expand=True,
+            )
+
+            app.logger.info(f"Succesfully downloaded model: {model_name}")
+        
+        except Exception as e:
+            app.logger.info(f"Failed to download model: {model_name}")
 
     global model
     model = pickle.load(open(model_name, "rb"))
 
-    app.logger.info("succesfully loaded default model")
+    app.logger.info("Succesfully loaded default model")
     pass
 
 
@@ -113,43 +125,58 @@ def download_registry_model():
         }
 
     """
+    app.logger.info("---------------------running download_registry_model()---------------------")
     # Get POST json data
-    json = request.get_json()
-    app.logger.info(json)
-
-    # TODO: check to see if the model you are querying for is already downloaded
-
-    # TODO: if yes, load that model and write to the log about the model change.
-    # eg: app.logger.info(<LOG STRING>)
-
-    # Tip: you can implement a "CometMLClient" similar to your App client to abstract all of this
-    # logic and querying of the CometML servers away to keep it clean here
+    user_json = request.get_json()
+    app.logger.info(user_json)
 
     global model_name
-    model_name = filename_dict["models"][comet_config["model"]][comet_config["version"]]
+    model_name = filename_dict["models"]\
+                    [user_json["model"]]\
+                    [user_json["version"]]
+
     model_file = Path(f"{model_name}")
 
-    # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
-    # about the model change. If it fails, write to the log about the failure and keep the
-    # currently loaded model
-    if not model_file.is_file():
-        api = API(key)
-        api.download_registry_model(
-            comet_config["workspace"],
-            comet_config["model"],
-            comet_config["version"],
-            output_path="./",
-            expand=True,
-        )
-        # rename_model_file(model_name)
-        print(model_name)
+    # Check to see if the model you are querying for is already downloaded
+    # if yes, load that model and write to the log about the model change. 
+    if os.path.isfile(model_file):
+        app.logger.info(f"Model {model_file} is already downloaded, loading ...")
+    
+    else:
+        app.logger.info(f"{model_file} doesn't exist, downloading ...")
+        # if it succeeds, load that model and write to the log about the model change. 
+        try:
+            # https://www.comet.ml/docs/python-sdk/API/#apidownload_registry_model
+            api.download_registry_model(
+                user_json["workspace"],
+                user_json["model"],
+                user_json["version"],
+                output_path="./ift6758/ift6758/data",
+                expand=True,
+            )
+
+            app.logger.info(f"Succesfully downloaded model name: {model_name}")
+        
+        except Exception as e:
+            app.logger.info(f"Failed to download model name: {model_name}.\nError:{e}")
 
     global model
-    model = pickle.load(open(model_name, "rb"))
+    try:
+        # As my XGBoost version is 1.5.0, there is error when load its models using pickle,
+        # so using sklearn lib load json models instead. 
+        if 'json' in model_name:
+            model = xgb.XGBClassifier()
+            model.load_model(model_name)
+        
+        else:
+            model = pickle.load(open(model_name, "rb"))
 
+        app.logger.info(f"Succesfully loaded default model {model_name}")
+    except Exception as e:
+        app.logger.info(f"Failed to load model {model_name} using pickle.\nError:{e}")
+    
     response = None
 
-    app.logger.info(response)
     return jsonify(response)  # response must be json serializable!
 
 
@@ -163,17 +190,16 @@ def predict():
     why method is not allowed:
     https://stackoverflow.com/a/21689599
     """
-    print("---------------------running predict()---------------------")
+    app.logger.info("---------------------running predict()---------------------")
     # Get POST json data
     data = request.get_json()
     app.logger.info(data)
 
-    features = features_dict[model_name]
-
-    X = pd.DataFrame(data)[features]
+    X = pd.DataFrame(data).iloc[: , :-1]
+    
     response = model.predict_proba(X)
 
-    app.logger.info(response)
+    app.logger.info(f"Done predict(). Result:\n{response}")
 
     # response must be json serializable!
     return jsonify({"response": response.tolist()})
@@ -181,9 +207,6 @@ def predict():
 
 if __name__ == "__main__":
     # run app in debug mode on port 5000
+    # kill a running process: 
+    # sudo kill -9 `sudo lsof -t -i:5000`
     app.run(debug=True, port=5000)
-
-
-"""
-focus on XGBoost model
-"""
