@@ -57,11 +57,22 @@ filename_dict = {
     }
 }
 
-features_dict = {
-    'models\log_reg\log_reg_dist.pkl': ['Distance from Net'],
-    'models\log_reg\log_reg_angle.pkl': ['Angle from Net'],
-    'models\log_reg\log_reg_both.pkl': ['Distance from Net', 'Angle from Net']
-}
+
+def get_features_names(model, filename):
+    """
+    :param model: XGBoost models.
+
+    :return: A list of features names.
+    """
+
+    # First way: model.get_booster().feature_names
+
+    # Second way: calculate feature importance
+    # ref: # https://machinelearningmastery.com/feature-importance-and-feature-selection-with-xgboost-in-python/
+
+    pass 
+
+
 
 
 
