@@ -65,12 +65,12 @@ def before_first_request():
                     [comet_config["model"]]\
                     [comet_config["version"]]
 
-    model_file = Path(f"{model_name}")
+    model_file = Path(f"./ift6758/ift6758/data/{model_name}")
 
     # Check to see if the model you are querying for is already downloaded
     # if yes, load that model and write to the log about the model change. 
     if os.path.isfile(model_file):
-        app.logger.info(f"Loading model {model_file}.")
+        app.logger.info(f"Loading model {model_name}.")
     
     else:
         app.logger.info(f"{model_file} doesn't exist, downloading ...")
@@ -81,7 +81,7 @@ def before_first_request():
                 comet_config["workspace"],
                 comet_config["model"],
                 comet_config["version"],
-                output_path="./",
+                output_path="./ift6758/ift6758/data/",
                 expand=True,
             )
 
@@ -91,7 +91,7 @@ def before_first_request():
             app.logger.info(f"Failed to download model: {model_name}")
 
     global model
-    model = pickle.load(open(model_name, "rb"))
+    model = pickle.load(open(model_file, "rb"))
 
     app.logger.info("Succesfully loaded default model")
     pass
@@ -135,7 +135,7 @@ def download_registry_model():
                     [user_json["model"]]\
                     [user_json["version"]]
 
-    model_file = Path(f"{model_name}")
+    model_file = Path(f"./ift6758/ift6758/data/{model_name}")
 
     # Check to see if the model you are querying for is already downloaded
     # if yes, load that model and write to the log about the model change. 
@@ -151,25 +151,38 @@ def download_registry_model():
                 user_json["workspace"],
                 user_json["model"],
                 user_json["version"],
-                output_path="./ift6758/ift6758/data",
+                output_path="./ift6758/ift6758/data/",
                 expand=True,
             )
 
-            app.logger.info(f"Succesfully downloaded model name: {model_name}")
+            app.logger.info(f"Succesfully downloaded model: {model_name}")
         
         except Exception as e:
-            app.logger.info(f"Failed to download model name: {model_name}.\nError:{e}")
+            app.logger.info(f"Failed to download model: {model_name}.\nError:{e}")
 
     global model
     try:
         # As my XGBoost version is 1.5.0, there is error when load its models using pickle,
         # so using sklearn lib load json models instead. 
+        
         if 'json' in model_name:
             model = xgb.XGBClassifier()
-            model.load_model(model_name)
+            # check model path
+            model_path = f'{model_file}/{model_name}'
+            
+            if os.path.isfile(model_path):
+                model.load_model(model_path)
+
+            # Features are various in XGBoost classifiers
+            # Get XGBoost Classifier feature names
+            clf = model.get_booster()
+
+            global feature_names
+            feature_names = clf.feature_names # a list of strings
+            app.logger.info(f"Selected features are:\n{feature_names}")
         
         else:
-            model = pickle.load(open(model_name, "rb"))
+            model = pickle.load(open(model_file, "rb"))
 
         app.logger.info(f"Succesfully loaded default model {model_name}")
     except Exception as e:
@@ -195,7 +208,7 @@ def predict():
     data = request.get_json()
     app.logger.info(data)
 
-    X = pd.DataFrame(data).iloc[: , :-1]
+    X = pd.DataFrame(data)[feature_names]
     
     response = model.predict_proba(X)
 
