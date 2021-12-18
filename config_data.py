@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # Miilestone 2 Q4 DataFrame
-df = pd.read_csv('/Users/xiaoxinzhou/Documents/IFT6758_M2_CSV_data/all_data_categorical.csv')
+df = pd.read_csv('ift6758/ift6758/data/all_data_categorical.csv')
 
 # Comet account API key
 key = os.environ.get("COMET_API_KEY")

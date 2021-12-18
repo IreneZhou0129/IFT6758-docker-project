@@ -1,0 +1,1 @@
+docker run test_tag:latest

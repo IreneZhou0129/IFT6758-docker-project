@@ -45,13 +45,16 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-
+COPY . /code
 
 # TODO: install libs
-
+COPY ift6758/requirements.txt .
+RUN pip install -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
 
 
+
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
+CMD ["python", "app.py"]
