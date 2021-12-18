@@ -31,8 +31,7 @@ from comet_ml import Experiment
 import ift6758
 from config_data import api, \
                         comet_config, \
-                        filename_dict, \
-                        features_dict
+                        filename_dict
 
 
 LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
@@ -163,21 +162,22 @@ def download_registry_model():
     global model
     try:
         # As my XGBoost version is 1.5.0, there is error when load its models using pickle,
-        # so using sklearn lib load json models instead. 
+        # so using sklearn lib load json models instead. https://mljar.com/blog/xgboost-save-load-python/
         
         if 'json' in model_name:
+    
             model = xgb.XGBClassifier()
             # check model path
             model_path = f'{model_file}/{model_name}'
             
             if os.path.isfile(model_path):
                 model.load_model(model_path)
-
+            else:
+                model.load_model(model_file)
             # Features are various in XGBoost classifiers
             # Get XGBoost Classifier feature names
             clf = model.get_booster()
-
-            global feature_names
+        
             feature_names = clf.feature_names # a list of strings
             app.logger.info(f"Selected features are:\n{feature_names}")
         
@@ -186,7 +186,7 @@ def download_registry_model():
 
         app.logger.info(f"Succesfully loaded default model {model_name}")
     except Exception as e:
-        app.logger.info(f"Failed to load model {model_name} using pickle.\nError:{e}")
+        app.logger.info(f"Failed to load model {model_name}.\nError:{e}")
     
     response = None
 
@@ -205,10 +205,11 @@ def predict():
     """
     app.logger.info("---------------------running predict()---------------------")
     # Get POST json data
+    
     data = request.get_json()
     app.logger.info(data)
-
-    X = pd.DataFrame(data)[feature_names]
+    
+    X = pd.DataFrame(data).iloc[: , :-1]
     
     response = model.predict_proba(X)
 
