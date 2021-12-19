@@ -223,4 +223,4 @@ if __name__ == "__main__":
     # run app in debug mode on port 5000
     # kill a running process: 
     # sudo kill -9 `sudo lsof -t -i:5000`
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", debug=True)

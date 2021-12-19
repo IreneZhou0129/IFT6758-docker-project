@@ -8,9 +8,11 @@ import os
 df = pd.read_csv('ift6758/ift6758/data/all_data_categorical.csv')
 
 # Comet account API key
-key = os.environ.get("COMET_API_KEY")
-breakpoint()
+# https://stackoverflow.com/questions/55702846/handling-environment-variables-in-flask-with-docker-deployment
+# https://stackoverflow.com/questions/49770999/docker-env-for-python-variables
+key = os.getenv("COMET_API_KEY")
 print(f"key is {key}")
+
 api = API(key)
 
 # Models paths schemas
