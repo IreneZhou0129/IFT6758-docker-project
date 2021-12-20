@@ -5,6 +5,9 @@ import pandas as pd
 import os
 
 # Miilestone 2 Q4 DataFrame
+import sys
+sys.path.append('../../..')
+
 df = pd.read_csv('ift6758/ift6758/data/all_data_categorical.csv')
 
 # Comet account API key
@@ -28,7 +31,7 @@ filename_dict = {
         'decision-tree-approach-2':{
             '1.0.0': 'approach_2.pkl'
         },
-        # As David mentioned in office hour, he mainly looking for 'M2 Q4 advanced features'.
+        # As David mentioned in office hour, he mainly looking for 'M2 Q4 advanced features' & 'M2 Q5 models'.
         # 'logreg-distance':{
         #     '1.0.0': 'models\log_reg\log_reg_dist.pkl',
         #     'features': ['Distance from Net']

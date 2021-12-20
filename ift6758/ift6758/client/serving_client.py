@@ -6,9 +6,11 @@ import os
 
 # Customized libs
 import sys
-sys.path.append('../../..')
-from config_data import comet_config, df
-
+sys.path.append('../../../')
+# from config_data import comet_config, df
+comet_config = {'workspace': 'xiaoxin-zhou', \
+                'model': 'decision-tree-approach-2', \
+                'version': '1.0.0'}
 
 LOG_FILE = os.environ.get("FLASK_LOG", "flask.log")
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO)
@@ -94,8 +96,8 @@ class ServingClient:
 if __name__=='__main__':
     s = ServingClient()
     # breakpoint()
-    s.download_registry_model(comet_config['workspace'],
-                                comet_config['model'],
-                                comet_config['version'])
+    # s.download_registry_model(comet_config['workspace'],
+    #                             comet_config['model'],
+    #                             comet_config['version'])
 
-    s.predict(df)
+    # s.predict(df)
