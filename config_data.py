@@ -5,6 +5,9 @@ import pandas as pd
 import os
 
 # Miilestone 2 Q4 DataFrame
+import sys
+sys.path.append('../../..')
+
 df = pd.read_csv('ift6758/ift6758/data/all_data_categorical.csv')
 
 # Comet account API key
@@ -24,23 +27,25 @@ filename_dict = {
     'models':{
         'decision-tree':{
             '1.0.2': 'approach_3.pkl',
+            '1.0.3': 'approach_2.pkl',
+            '1.0.4': 'approach_1.pkl',
         },
         'decision-tree-approach-2':{
             '1.0.0': 'approach_2.pkl'
         },
-        # As David mentioned in office hour, he mainly looking for 'M2 Q4 advanced features'.
-        # 'logreg-distance':{
-        #     '1.0.0': 'models\log_reg\log_reg_dist.pkl',
-        #     'features': ['Distance from Net']
-        # },
-        # 'logreg-angle':{
-        #     '1.0.0': 'models\log_reg\log_reg_angle.pkl',
-        #     'features': ['Angle from Net']
-        # },
-        # 'logreg-both':{
-        #     '1.0.0': 'models\log_reg\log_reg_both.pkl',
-        #     'features': ['Distance from Net', 'Angle from Net']
-        # },
+        # As David mentioned in office hour, he mainly looking for 'M2 Q4 advanced features' & 'M2 Q5 models'.
+        'logreg-distance':{
+            '1.0.0': 'models\log_reg\log_reg_dist.pkl',
+            'features': ['Distance from Net']
+        },
+        'logreg-angle':{
+            '1.0.0': 'models\log_reg\log_reg_angle.pkl',
+            'features': ['Angle from Net']
+        },
+        'logreg-both':{
+            '1.0.0': 'models\log_reg\log_reg_both.pkl',
+            'features': ['Distance from Net', 'Angle from Net']
+        },
         'xgboost-5-2':{
             '1.0.3': 'q5_2_tuned.json', 
         },
