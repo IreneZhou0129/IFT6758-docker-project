@@ -45,7 +45,7 @@ class ServingClient:
 
         user_request = requests.post(
             "http://127.0.0.1:5000/predict", 
-            json = json.loads(df.iloc[0:5].to_json())
+            json = json.loads(X.iloc[0:5].to_json())
         )
         
         logger.info(f"Successfully generated predictions")
@@ -100,4 +100,5 @@ if __name__=='__main__':
     #                             comet_config['model'],
     #                             comet_config['version'])
 
+    # df = pd.read_csv('ift6758/ift6758/data/all_data_categorical.csv')
     # s.predict(df)
