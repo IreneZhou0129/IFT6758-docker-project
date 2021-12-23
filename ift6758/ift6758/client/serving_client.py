@@ -30,6 +30,8 @@ class ServingClient:
         self.features = features
 
         # any other potential initialization
+        self.ip = ip
+        self.port = port
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -44,7 +46,7 @@ class ServingClient:
         logger.info(f"Initializing request to generate predictions")
 
         user_request = requests.post(
-            "http://127.0.0.1:5000/predict", 
+            f"http://{self.ip}:{self.port}/predict", 
             json = json.loads(X.iloc[0:5].to_json())
         )
         
@@ -61,7 +63,7 @@ class ServingClient:
         logger.info('------- serving_client/logs ---------')
         logger.info(f"Initializing request to server get logs")
         user_request = requests.post(
-            "http://127.0.0.1:5000/download_registry_model", 
+            f"http://{self.ip}:{self.port}/download_registry_model", 
             json = comet_config
         )
         logger.info(f"Server Logs fetched")
@@ -85,7 +87,7 @@ class ServingClient:
         logger.info('------- serving_client/download_registry_model ---------')
         logger.info(f"Downloading the model {model}-{version}")
         user_request = requests.post(
-            "http://127.0.0.1:5000/download_registry_model", 
+            f"http://{self.ip}:{self.port}/download_registry_model", 
             json = {'workspace': workspace,
                    'model': model,
                    'version': version}
@@ -93,8 +95,8 @@ class ServingClient:
         logger.info(f"Successfully downloaded model {model}")
 
 
-if __name__=='__main__':
-    s = ServingClient()
+# if __name__=='__main__':
+#     s = ServingClient()
     # breakpoint()
     # s.download_registry_model(comet_config['workspace'],
     #                             comet_config['model'],
