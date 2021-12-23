@@ -1,8 +1,8 @@
 # To build a container, you will use the docker build command
 # https://docs.docker.com/engine/reference/commandline/build/
 #
-#   docker build -t <IMAGE TAG> -f Dockerfile.serving .
-#   docker build -t <IMAGE TAG> -f Dockerfile.jupyter .
+#   docker build -t ift6758/serving:test_tag -f Dockerfile.serving .
+#   docker build -t ift6758/jupyter:test_jupyter -f Dockerfile.jupyter .
 #
 
 
@@ -45,15 +45,50 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-
+# COPY ift6758/ift6758/client/jupyter_dashboard.ipynb /code/ift6758/ift6758/client/jupyter_dashboard.ipynb
+COPY ift6758/ift6758/client /code/ift6758/ift6758/client
+# CD /code
 
 # TODO: install libs
 COPY ift6758/requirements.txt .
 RUN pip install -r requirements.txt
 
 # TODO: expose ports (or do this in docker-compose)
-
+# EXPOSE 8889
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
-CMD ['jupyter-lab', '--port=JUPYTER_PORT', '--no-browser', '--ip=0.0.0.0', '--allow-root']
+ENTRYPOINT ["jupyter", "lab", "--port=8890", "--ip=0.0.0.0", "--allow-root"]
+# CMD ['jupyter-lab', '--port=8888', '--no-browser', '--ip=0.0.0.0', '--allow-root']
+
+
+# reference:
+# https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
+# https://u.group/thinking/how-to-put-jupyter-notebooks-in-a-dockerfile/
+# https://stackoverflow.com/questions/49024624/how-to-dockerize-jupyter-lab
+# what is sha256? https://www.n-able.com/blog/sha-256-encryption
+
+
+# Note:
+# in app.py log:
+# serving_1  |  * Serving Flask app 'app' (lazy loading)
+# 
+# serving_1  |  * Environment: production
+# 
+# serving_1  |    WARNING: This is a development server. Do not use it in a production deployment.
+# 
+# serving_1  |    Use a production WSGI server instead.
+# 
+# serving_1  |  * Debug mode: on
+# 
+# serving_1  |  * Running on all addresses.
+# 
+# serving_1  |    WARNING: This is a development server. Do not use it in a production deployment.
+# 
+# serving_1  |  * Running on http://172.23.0.2:5000/ (Press CTRL+C to quit) <----- ip: 172.23.0.2, so 'sc=ServingClient(ip='172.23.0.2')'
+# 
+# serving_1  |  * Restarting with stat
+# 
+# serving_1  |  * Debugger is active!
+# 
+# serving_1  |  * Debugger PIN: 442-944-611
