@@ -1,8 +1,8 @@
 # To build a container, you will use the docker build command
 # https://docs.docker.com/engine/reference/commandline/build/
 #
-#   docker build -t <IMAGE TAG> -f Dockerfile.serving .
-#   docker build -t <IMAGE TAG> -f Dockerfile.jupyter .
+#   docker build -t ift6758/serving:test_tag -f Dockerfile.serving .
+#   docker build -t ift6758/jupyter:test_jupyter -f Dockerfile.jupyter .
 #
 
 
@@ -55,4 +55,12 @@ RUN pip install -r requirements.txt
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
-CMD ["python", "app.py"]
+# CMD ["python", "app.py"]
+# ENTRYPOINT ['gunicorn', '--bind', '0.0.0.0:5000', 'app:app']
+# CMD ["./gunicorn_run.sh"]
+ENTRYPOINT ["gunicorn"]
+CMD ["--bind", "0.0.0.0:5000", "app:app"]
+
+# reference:
+# images VS containers: https://phoenixnap.com/kb/docker-image-vs-container
+# 'gunicorn not found': https://stackoverflow.com/a/53763372
