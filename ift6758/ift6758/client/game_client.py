@@ -207,15 +207,12 @@ class GameClient:
             # df = pd.DataFrame.from_records(data)
             # df.to_csv(f'{game_id}_incomplete.csv')
             
-            ### now, predict xG for each row with team name removed?###
-            #                                  #
-            ####################################
-            
             self.games_dataframes[game_id] = df
             
             self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
         
-            
+            df_without_team_name = self.games_dataframes[game_id].drop(columns=['Team Name'])
+            return df_without_team_name
         
         ### game_id has already been pinged before #####################
         else:
@@ -359,15 +356,19 @@ class GameClient:
             # df = pd.DataFrame.from_records(data)
             # df.to_csv(f'{game_id}_incomplete.csv')
             
-            ### now, predict xG for each row with team name removed###
-            #                                  #
-            ####################################
-            
             self.games_dataframes[game_id].append(df)
             
             self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
+            
+            df_without_team_name = self.games_dataframes[game_id].drop(columns=['Team Name'])
+            return df_without_team_name
 
     
+    def add_pred_probs_to_df(self, game_id, xG):
+        self.games_dataframes[game_id]['xG'] = xG
+        # return self.games_dataframes[game_id]
+        
+        
     def get_xG_table(self, game_id):
         response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{game_id}/feed/live/")
         json_data = response.json()
@@ -394,7 +395,7 @@ class GameClient:
         return t
         
 
-a = GameClient()
-a.process_and_predict_data(2021020329)
-t = a.get_xG_table(2021020329)
-print(t)
+# a = GameClient()
+# a.process_and_predict_data(2021020329)
+# t = a.get_xG_table(2021020329)
+# print(t)
