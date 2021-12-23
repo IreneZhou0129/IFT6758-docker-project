@@ -7,6 +7,7 @@ import datetime
 import os
 import math
 import csv
+import numpy as np
 from prettytable import PrettyTable
 
 
@@ -14,12 +15,51 @@ class GameClient:
     def __init__(self):
         # key: game_id, value: processed dataframe for up to what event has occurred live
         self.games_dataframes = {}
+        self.shot_types = {'Wrist Shot': 0, 'Backhand': 1, 'Slap Shot': 2, 'Snap Shot': 3, 'Tip-In': 4, 'Deflected': 5, 'Wrap-around': 6, 'NA': 7}
+        self.last_event_types = {'Hit': 0, 'Faceoff': 1, 'Takeaway': 2, 'Blocked Shot': 3, 'Giveaway': 4, 'Shot': 5, 'Missed Shot': 6, 'Goal': 7, 'Penalty': 8}
     
     
     def process_and_predict_data(self, game_id):
 
-        response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{self.game_id}/feed/live/")
+        response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{game_id}/feed/live/")
         json_data = response.json()
+        
+        def get_distance_angle(shoot_left, x_coor, y_coor):
+            if shoot_left == True:
+                distance = math.sqrt((89 + x_coor) ** 2 + (y_coor) ** 2)
+                if x_coor == -89:
+                    if y_coor > 0:
+                        angle = 0
+                    elif y_coor < 0:
+                        angle = 180
+                    elif y_coor == 0:
+                        angle = 90
+                else:
+                    if y_coor > 0:
+                        angle = math.degrees(math.atan((89 + x_coor) / y_coor))
+                    elif y_coor < 0:
+                        angle = 180 - abs(math.degrees(math.atan((89 + x_coor) / y_coor)))
+                    elif y_coor == 0:
+                        angle = 90
+
+            elif shoot_left == False:
+                distance = math.sqrt((89 - x_coor) ** 2 + (y_coor) ** 2)
+                if x_coor == 89:
+                    if y_coor > 0:
+                        angle = 180
+                    elif y_coor < 0:
+                        angle = 0
+                    elif y_coor == 0:
+                        angle = 90
+                else:
+                    if y_coor > 0:
+                        angle = 180 - abs(math.degrees(math.atan((89 - x_coor) / y_coor)))
+                    elif y_coor < 0:
+                        angle = abs(math.degrees(math.atan((89 - x_coor) / y_coor)))
+                    elif y_coor == 0:
+                        angle = 90
+
+            return distance, angle
         
         ### first time pinging this game_id ##########
         if game_id not in self.games_dataframes:
@@ -149,35 +189,31 @@ class GameClient:
 
                     #######################################################################################
 
-                    row_data = [eventIdx, self.game_id, game_seconds, game_period, x_coor, y_coor, 
-                                distance, angle, shot_type, int(is_net_empty), last_event, last_x_coor,
+                    row_data = [eventIdx, game_id, game_seconds, game_period, x_coor, y_coor, 
+                                distance, angle, self.shot_types[shot_type], int(is_net_empty), self.last_event_types[last_event], last_x_coor,
                                 last_y_coor, time_from_last_event, distance_from_last_event, is_rebound, 
                                 change_in_shot_angle, speed, team_name, int(event == 'Goal')]
 
                     if type(x_coor) == int and type(y_coor) == int and type(last_x_coor) == int and type(last_y_coor) == int:
                         data.append(row_data)
+                        print(row_data)
 
             df = pd.DataFrame(np.array(data), columns=column_names)
+            # df = df.drop(df.columns[0], axis=1)
+            # df.reset_index(drop=True, inplace=True)
+            df = df.set_index('eventIdx')
+            # df.to_csv(f'{game_id}_incomplete.csv')
             
             # df = pd.DataFrame.from_records(data)
-
-            unique_shot_types = df.iloc[:, 8].unique()
-            # print(unique_shot_types)
-            df.iloc[:, 8].replace(to_replace=unique_shot_types,
-                   value=list(range(len(unique_shot_types))),
-                   inplace=True)
-
-            unique_last_event_types = df.iloc[:, 10].unique()
-            # print(unique_last_event_types)
-            df.iloc[:, 10].replace(to_replace=unique_last_event_types,
-                   value=list(range(len(unique_last_event_types))),
-                   inplace=True)
+            # df.to_csv(f'{game_id}_incomplete.csv')
             
-            ### now, predict xG for each row ###
+            ### now, predict xG for each row with team name removed?###
             #                                  #
             ####################################
             
             self.games_dataframes[game_id] = df
+            
+            self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
         
             
         
@@ -306,8 +342,8 @@ class GameClient:
 
                     #######################################################################################
 
-                    row_data = [eventIdx, self.game_id, game_seconds, game_period, x_coor, y_coor, 
-                                distance, angle, shot_type, int(is_net_empty), last_event, last_x_coor,
+                    row_data = [eventIdx, game_id, game_seconds, game_period, x_coor, y_coor, 
+                                distance, angle, self.shot_types[shot_type], int(is_net_empty), self.last_event_types[last_event], last_x_coor,
                                 last_y_coor, time_from_last_event, distance_from_last_event, is_rebound, 
                                 change_in_shot_angle, speed, team_name, int(event == 'Goal')]
 
@@ -315,66 +351,25 @@ class GameClient:
                         data.append(row_data)
 
             df = pd.DataFrame(np.array(data), columns=column_names)
-
-            unique_shot_types = df.iloc[:, 8].unique()
-            # print(unique_shot_types)
-            df.iloc[:, 8].replace(to_replace=unique_shot_types,
-                   value=list(range(len(unique_shot_types))),
-                   inplace=True)
-
-            unique_last_event_types = df.iloc[:, 10].unique()
-            # print(unique_last_event_types)
-            df.iloc[:, 10].replace(to_replace=unique_last_event_types,
-                   value=list(range(len(unique_last_event_types))),
-                   inplace=True)
+            # df = df.drop(df.columns[0], axis=1)
+            # df.reset_index(drop=True, inplace=True)
+            df = df.set_index('eventIdx')
+            # df.to_csv(f'{game_id}_incomplete.csv')
             
-            ### now, predict xG for each row ###
+            # df = pd.DataFrame.from_records(data)
+            # df.to_csv(f'{game_id}_incomplete.csv')
+            
+            ### now, predict xG for each row with team name removed###
             #                                  #
             ####################################
             
             self.games_dataframes[game_id].append(df)
-
-        
-    def get_distance_angle(self, shoot_left, x_coor, y_coor):
-        if shoot_left == True:
-            distance = math.sqrt((89 + x_coor) ** 2 + (y_coor) ** 2)
-            if x_coor == -89:
-                if y_coor > 0:
-                    angle = 0
-                elif y_coor < 0:
-                    angle = 180
-                elif y_coor == 0:
-                    angle = 90
-            else:
-                if y_coor > 0:
-                    angle = math.degrees(math.atan((89 + x_coor) / y_coor))
-                elif y_coor < 0:
-                    angle = 180 - abs(math.degrees(math.atan((89 + x_coor) / y_coor)))
-                elif y_coor == 0:
-                    angle = 90
-
-        elif shoot_left == False:
-            distance = math.sqrt((89 - x_coor) ** 2 + (y_coor) ** 2)
-            if x_coor == 89:
-                if y_coor > 0:
-                    angle = 180
-                elif y_coor < 0:
-                    angle = 0
-                elif y_coor == 0:
-                    angle = 90
-            else:
-                if y_coor > 0:
-                    angle = 180 - abs(math.degrees(math.atan((89 - x_coor) / y_coor)))
-                elif y_coor < 0:
-                    angle = abs(math.degrees(math.atan((89 - x_coor) / y_coor)))
-                elif y_coor == 0:
-                    angle = 90
-
-        return distance, angle
+            
+            self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
 
     
     def get_xG_table(self, game_id):
-        response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{self.game_id}/feed/live/")
+        response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{game_id}/feed/live/")
         json_data = response.json()
         
         all_plays = json_data['liveData']['plays']['allPlays']
@@ -388,10 +383,10 @@ class GameClient:
         df = self.games_dataframes[game_id]
         home_team_indices = df.index[df['Team Name'] == home_team].tolist()
         away_team_indices = df.index[df['Team Name'] == away_team].tolist()
-        home_sum_xG = df.iloc[home_team_indices, df.columns.get_loc('Team Name')].sum()
-        away_sum_xG = df.iloc[away_team_indices, df.columns.get_loc('Team Name')].sum()
+        home_sum_xG = df.iloc[home_team_indices, df.columns.get_loc('xG')].sum()
+        away_sum_xG = df.iloc[away_team_indices, df.columns.get_loc('xG')].sum()
         
-        t = PrettyTable([f'Period {game_period} - {game_period_time_remaining}'])
+        t = PrettyTable([f'Period: {game_period}', f'Time Left: {game_period_time_remaining}'])
         t.add_row(['Home Team', 'Away Team'])
         t.add_row([home_team, away_team])
         t.add_row([home_sum_xG, away_sum_xG])
@@ -399,6 +394,7 @@ class GameClient:
         return t
         
 
-# a = GameClient()
-# a.process_and_predict_data(2021020329)
-# a.get_xG_table(2021020329)
+a = GameClient()
+a.process_and_predict_data(2021020329)
+t = a.get_xG_table(2021020329)
+print(t)
