@@ -19,6 +19,7 @@ print(f"key is {key}")
 api = API(key)
 
 # Models paths schemas
+# This default model is expecting 18 features. 
 comet_config = {'workspace': 'xiaoxin-zhou', \
                 'model': 'decision-tree-approach-2', \
                 'version': '1.0.0'}
