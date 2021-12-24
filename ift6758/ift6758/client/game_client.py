@@ -181,9 +181,9 @@ class GameClient:
 
                     # Q4.3 ################################################################################
 
-                    is_rebound = True if last_event == 'Shot' and game_period == all_plays[i - 1]['about']['period'] else False
+                    is_rebound = 1 if last_event == 'Shot' and game_period == all_plays[i - 1]['about']['period'] else 0
 
-                    change_in_shot_angle = angle - prev_angle if is_rebound else 0
+                    change_in_shot_angle = angle - prev_angle if (is_rebound==1) else 0
 
                     speed = distance_from_last_event / time_from_last_event if time_from_last_event != 0 else 0
 
@@ -196,7 +196,7 @@ class GameClient:
 
                     if type(x_coor) == int and type(y_coor) == int and type(last_x_coor) == int and type(last_y_coor) == int:
                         data.append(row_data)
-                        print(row_data)
+                        # print(row_data)
 
             df = pd.DataFrame(np.array(data), columns=column_names)
             # df = df.drop(df.columns[0], axis=1)
@@ -212,11 +212,14 @@ class GameClient:
             self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
         
             df_without_team_name = self.games_dataframes[game_id].drop(columns=['Team Name'])
+            
             return df_without_team_name
         
         ### game_id has already been pinged before #####################
         else:
-            current_eventIdx = self.games_dataframes.get(game_id).iloc[-1, self.games_dataframes.get(game_id).columns.get_loc('eventIdx')]
+            curr_game = self.games_dataframes.get(game_id)
+            
+            current_eventIdx = curr_game.iloc[-1, curr_game.columns.get_loc('eventIdx')]
             
             data = []
             
@@ -331,9 +334,9 @@ class GameClient:
 
                     # Q4.3 ################################################################################
 
-                    is_rebound = True if last_event == 'Shot' and game_period == all_plays[i - 1]['about']['period'] else False
+                    is_rebound = 1 if last_event == 'Shot' and game_period == all_plays[i - 1]['about']['period'] else 0
 
-                    change_in_shot_angle = angle - prev_angle if is_rebound else 0
+                    change_in_shot_angle = angle - prev_angle if (is_rebound==1) else 0
 
                     speed = distance_from_last_event / time_from_last_event if time_from_last_event != 0 else 0
 
@@ -361,6 +364,7 @@ class GameClient:
             self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
             
             df_without_team_name = self.games_dataframes[game_id].drop(columns=['Team Name'])
+            
             return df_without_team_name
 
     
