@@ -16,7 +16,7 @@ class GameClient:
         # key: game_id, value: processed dataframe for up to what event has occurred live
         self.games_dataframes = {}
         self.shot_types = {'Wrist Shot': 0, 'Backhand': 1, 'Slap Shot': 2, 'Snap Shot': 3, 'Tip-In': 4, 'Deflected': 5, 'Wrap-around': 6, 'NA': 7}
-        self.last_event_types = {'Hit': 0, 'Faceoff': 1, 'Takeaway': 2, 'Blocked Shot': 3, 'Giveaway': 4, 'Shot': 5, 'Missed Shot': 6, 'Goal': 7, 'Penalty': 8}
+        self.last_event_types = {'Hit': 0, 'Faceoff': 1, 'Takeaway': 2, 'Blocked Shot': 3, 'Giveaway': 4, 'Shot': 5, 'Missed Shot': 6, 'Goal': 7, 'Penalty': 8, 'Stoppage': 9}
     
     
     def process_and_predict_data(self, game_id):
@@ -61,12 +61,14 @@ class GameClient:
 
             return distance, angle
         
+        column_names = ['eventIdx', 'game_id', 'Game Seconds', 'Game Period', 'X-Coordinate', 'Y-Coordinate', 
+                   'Shot Distance', 'Shot Angle', 'Shot Type', 'Was Net Empty', 'Last Event Type', 'Last X-Coordinate',
+                   'Last Y-Coordinate', 'Time from Last Event (seconds)', 'Distance from Last Event', 'Is Rebound',
+                   'Change in Shot Angle', 'Speed', 'Team Name', 'Is Goal']
+            
         ### first time pinging this game_id ##########
         if game_id not in self.games_dataframes:
-            column_names = ['eventIdx', 'game_id', 'Game Seconds', 'Game Period', 'X-Coordinate', 'Y-Coordinate', 
-                       'Shot Distance', 'Shot Angle', 'Shot Type', 'Was Net Empty', 'Last Event Type', 'Last X-Coordinate',
-                       'Last Y-Coordinate', 'Time from Last Event (seconds)', 'Distance from Last Event', 'Is Rebound',
-                       'Change in Shot Angle', 'Speed', 'Team Name', 'Is Goal']
+
 
             data = []
             
@@ -196,16 +198,10 @@ class GameClient:
 
                     if type(x_coor) == int and type(y_coor) == int and type(last_x_coor) == int and type(last_y_coor) == int:
                         data.append(row_data)
-                        # print(row_data)
 
             df = pd.DataFrame(np.array(data), columns=column_names)
-            # df = df.drop(df.columns[0], axis=1)
-            # df.reset_index(drop=True, inplace=True)
-            df = df.set_index('eventIdx')
-            # df.to_csv(f'{game_id}_incomplete.csv')
             
-            # df = pd.DataFrame.from_records(data)
-            # df.to_csv(f'{game_id}_incomplete.csv')
+            # df = df.set_index('eventIdx')
             
             self.games_dataframes[game_id] = df
             
@@ -235,7 +231,10 @@ class GameClient:
 
             for i in range(len(all_plays)):
                 event = all_plays[i]['result']['event']
-                if event == 'Shot' or event == 'Goal' and all_plays[i]['about']['eventIdx'] > current_eventIdx:
+                # print('event', event)
+                # print('type(int(all_plays[i][\'about\'][\'eventIdx\']))', type(int(all_plays[i]['about']['eventIdx'])))
+                # print('type(current_eventIdx)', type(current_eventIdx))
+                if event == 'Shot' or event == 'Goal' and int(all_plays[i]['about']['eventIdx']) > int(current_eventIdx):
 
                     # Q4.1 ################################################################################
 
@@ -351,13 +350,8 @@ class GameClient:
                         data.append(row_data)
 
             df = pd.DataFrame(np.array(data), columns=column_names)
-            # df = df.drop(df.columns[0], axis=1)
-            # df.reset_index(drop=True, inplace=True)
-            df = df.set_index('eventIdx')
-            # df.to_csv(f'{game_id}_incomplete.csv')
             
-            # df = pd.DataFrame.from_records(data)
-            # df.to_csv(f'{game_id}_incomplete.csv')
+            # df = df.set_index('eventIdx')
             
             self.games_dataframes[game_id].append(df)
             
@@ -365,10 +359,14 @@ class GameClient:
             
             df_without_team_name = self.games_dataframes[game_id].drop(columns=['Team Name'])
             
+            # print('process_and_predict_data')
+            # print(df_without_team_name.columns)
+            
             return df_without_team_name
 
     
     def add_pred_probs_to_df(self, game_id, xG):
+        xG = np.asarray(xG['response'])[:, 1].tolist()
         self.games_dataframes[game_id]['xG'] = xG
         # return self.games_dataframes[game_id]
         

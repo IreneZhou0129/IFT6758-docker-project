@@ -47,7 +47,7 @@ class ServingClient:
 
         user_request = requests.post(
             f"http://{self.ip}:{self.port}/predict", 
-            json = json.loads(X.iloc[0:5].to_json())
+            json = json.loads(X.to_json())
         )
         
         logger.info(f"Successfully generated predictions")

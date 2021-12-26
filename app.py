@@ -208,9 +208,13 @@ def predict():
     
     data = request.get_json()
     app.logger.info(data)
-    
-    X = pd.DataFrame(data).iloc[: , :-1]
+    print('app.py X:')
+    # X = pd.DataFrame(data).iloc[: , :-1]
+    X = pd.DataFrame(data).drop(columns=['Is Goal'])
+    if 'xG' in X.columns:
+        X = X.drop(columns=['xG'])
     # breakpoint()
+    print(X.columns)
     response = model.predict_proba(X)
 
     app.logger.info(f"Done predict(). Result:\n{response}")
