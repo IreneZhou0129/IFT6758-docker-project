@@ -46,7 +46,7 @@ WORKDIR /code
 
 # TODO: add code, optionally a default model if you want 
 # COPY ift6758/ift6758/client/jupyter_dashboard.ipynb /code/ift6758/ift6758/client/jupyter_dashboard.ipynb
-COPY ift6758/ift6758/client /code/ift6758/ift6758/client
+COPY ift6758/ /code/ift6758/
 # CD /code
 
 # TODO: install libs
