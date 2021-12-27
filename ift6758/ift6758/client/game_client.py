@@ -21,6 +21,9 @@ class GameClient:
     
     def process_and_predict_data(self, game_id):
 
+        # game_id = int(game_id)
+        print(f"game_id type:{type(game_id)}")
+        
         response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{game_id}/feed/live/")
         json_data = response.json()
         
@@ -64,7 +67,7 @@ class GameClient:
         column_names = ['eventIdx', 'game_id', 'Game Seconds', 'Game Period', 'X-Coordinate', 'Y-Coordinate', 
                    'Shot Distance', 'Shot Angle', 'Shot Type', 'Was Net Empty', 'Last Event Type', 'Last X-Coordinate',
                    'Last Y-Coordinate', 'Time from Last Event (seconds)', 'Distance from Last Event', 'Is Rebound',
-                   'Change in Shot Angle', 'Speed', 'Team Name', 'Is Goal']
+                   'Change in Shot Angle', 'Speed', 'Is Goal'] # deleted 'Team Name'
             
         ### first time pinging this game_id ##########
         if game_id not in self.games_dataframes:
@@ -72,6 +75,8 @@ class GameClient:
 
             data = []
             
+            team_names = []
+
             all_plays = json_data['liveData']['plays']['allPlays']
 
             home_team = json_data['gameData']['teams']['home'].get('name')
@@ -194,13 +199,19 @@ class GameClient:
                     row_data = [eventIdx, game_id, game_seconds, game_period, x_coor, y_coor, 
                                 distance, angle, self.shot_types[shot_type], int(is_net_empty), self.last_event_types[last_event], last_x_coor,
                                 last_y_coor, time_from_last_event, distance_from_last_event, is_rebound, 
-                                change_in_shot_angle, speed, team_name, int(event == 'Goal')]
+                                change_in_shot_angle, speed, int(event == 'Goal')]
 
                     if type(x_coor) == int and type(y_coor) == int and type(last_x_coor) == int and type(last_y_coor) == int:
                         data.append(row_data)
+                        team_names.append(team_name)
+                        # print('heyyy UWU', type(eventIdx), type(game_id), type(game_seconds), type(game_period), type(x_coor))
+                        # break
 
             df = pd.DataFrame(np.array(data), columns=column_names)
+            df['Team Name'] = team_names
             
+            # print(f"------- game_client: {type(df.iloc[0,1])}")
+            # print('df.dtypes', df.dtypes)
             # df = df.set_index('eventIdx')
             
             self.games_dataframes[game_id] = df
@@ -208,7 +219,7 @@ class GameClient:
             self.games_dataframes[game_id].to_csv(f'{game_id}.csv')
         
             df_without_team_name = self.games_dataframes[game_id].drop(columns=['Team Name'])
-            
+
             return df_without_team_name
         
         ### game_id has already been pinged before #####################
@@ -218,6 +229,8 @@ class GameClient:
             current_eventIdx = curr_game.iloc[-1, curr_game.columns.get_loc('eventIdx')]
             
             data = []
+
+            team_names = []
             
             all_plays = json_data['liveData']['plays']['allPlays']
 
@@ -344,13 +357,19 @@ class GameClient:
                     row_data = [eventIdx, game_id, game_seconds, game_period, x_coor, y_coor, 
                                 distance, angle, self.shot_types[shot_type], int(is_net_empty), self.last_event_types[last_event], last_x_coor,
                                 last_y_coor, time_from_last_event, distance_from_last_event, is_rebound, 
-                                change_in_shot_angle, speed, team_name, int(event == 'Goal')]
+                                change_in_shot_angle, speed, int(event == 'Goal')]
 
                     if type(x_coor) == int and type(y_coor) == int and type(last_x_coor) == int and type(last_y_coor) == int:
                         data.append(row_data)
+                        team_names.append(team_name)
+                        # print('else heyyy UWU', type(eventIdx), type(game_id), type(game_seconds), type(game_period), type(x_coor))
+                        # break
 
             df = pd.DataFrame(np.array(data), columns=column_names)
-            
+            df['Team Name'] = team_names
+
+            # print(f"ELSE------- game_client: {type(df.iloc[0,1])}")
+            # print('df.dtypes', df.dtypes)
             # df = df.set_index('eventIdx')
             
             self.games_dataframes[game_id].append(df)
@@ -361,7 +380,7 @@ class GameClient:
             
             # print('process_and_predict_data')
             # print(df_without_team_name.columns)
-            
+
             return df_without_team_name
 
     

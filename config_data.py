@@ -19,9 +19,10 @@ print(f"key is {key}")
 api = API(key)
 
 # Models paths schemas
-# This default model is expecting 18 features. 
+# This default model is expecting 18 features.
+#  works
 comet_config = {'workspace': 'xiaoxin-zhou', \
-                'model': 'decision-tree-approach-2', \
+                'model': 'decision-tree-approach-2', \ 
                 'version': '1.0.0'}
 
 filename_dict = {
@@ -47,7 +48,7 @@ filename_dict = {
             '1.0.0': 'models\log_reg\log_reg_both.pkl',
             'features': ['Distance from Net', 'Angle from Net']
         },
-        'xgboost-5-2':{
+        'xgboost-5-2':{ # works
             '1.0.3': 'q5_2_tuned.json', 
         },
         'xgboost-model-var-threshold':{
