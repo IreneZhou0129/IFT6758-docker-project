@@ -22,7 +22,7 @@ class GameClient:
     def process_and_predict_data(self, game_id):
 
         # game_id = int(game_id)
-        print(f"game_id type:{type(game_id)}")
+        # print(f"game_id type:{type(game_id)}")
         
         response = requests.get(f"https://statsapi.web.nhl.com/api/v1/game/{game_id}/feed/live/")
         json_data = response.json()
