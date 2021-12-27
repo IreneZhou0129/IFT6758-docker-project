@@ -22,7 +22,7 @@ api = API(key)
 # This default model is expecting 18 features.
 #  works
 comet_config = {'workspace': 'xiaoxin-zhou', \
-                'model': 'decision-tree-approach-2', \ 
+                'model': 'decision-tree-approach-2', \
                 'version': '1.0.0'}
 
 filename_dict = {
